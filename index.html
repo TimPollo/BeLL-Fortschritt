@@ -1,0 +1,668 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0b0b0d" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="BeLL" />
+  <title>BeLL – Fortschritt</title>
+
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png" />
+
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #08080a;
+      --surface: rgba(20, 20, 23, 0.92);
+      --surface-2: rgba(29, 29, 33, 0.94);
+      --border: rgba(255, 255, 255, 0.08);
+      --text: #f5f5f7;
+      --muted: #a7a7ad;
+      --accent: #ff5a1f;
+      --accent-soft: rgba(255, 90, 31, 0.16);
+      --done: #34c759;
+      --done-soft: rgba(52, 199, 89, 0.15);
+      --shadow: 0 18px 48px rgba(0, 0, 0, 0.36);
+      --radius: 22px;
+    }
+
+    * { box-sizing: border-box; }
+
+    html { background: var(--bg); }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 12% -10%, rgba(255, 90, 31, 0.13), transparent 31%),
+        radial-gradient(circle at 100% 15%, rgba(255, 90, 31, 0.07), transparent 28%),
+        var(--bg);
+      -webkit-font-smoothing: antialiased;
+      padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom);
+    }
+
+    button, input { font: inherit; }
+
+    .app {
+      width: min(940px, 100%);
+      margin: 0 auto;
+      padding: 20px 16px 44px;
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: 68px 1fr;
+      gap: 16px;
+      align-items: center;
+      padding: 14px 4px 22px;
+    }
+
+    .hero img {
+      width: 68px;
+      height: 68px;
+      border-radius: 18px;
+      box-shadow: 0 10px 32px rgba(255, 80, 22, 0.18);
+    }
+
+    .eyebrow {
+      color: var(--accent);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+
+    h1 {
+      font-size: clamp(27px, 5vw, 39px);
+      line-height: 1.05;
+      letter-spacing: -0.035em;
+      margin: 0;
+    }
+
+    .subtitle {
+      margin: 7px 0 0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.45;
+    }
+
+    .dashboard {
+      background: linear-gradient(145deg, rgba(31, 31, 35, 0.97), rgba(17, 17, 20, 0.98));
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 18px;
+      margin-bottom: 15px;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .stat {
+      background: rgba(255, 255, 255, 0.045);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 16px;
+      padding: 13px;
+      min-width: 0;
+    }
+
+    .stat-value {
+      display: block;
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: -0.035em;
+      white-space: nowrap;
+    }
+
+    .stat-label {
+      display: block;
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.055em;
+    }
+
+    .progress-row + .progress-row { margin-top: 12px; }
+
+    .progress-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: baseline;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+      margin-bottom: 7px;
+    }
+
+    .progress-track {
+      height: 8px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.07);
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      width: 0;
+      border-radius: inherit;
+      transition: width 220ms ease;
+    }
+
+    .progress-fill.edited { background: var(--accent); }
+    .progress-fill.final { background: var(--done); }
+
+    .toolbar {
+      position: sticky;
+      top: calc(env(safe-area-inset-top) + 8px);
+      z-index: 10;
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding: 9px;
+      margin: 0 0 15px;
+      border: 1px solid var(--border);
+      background: rgba(14, 14, 17, 0.88);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border-radius: 18px;
+      scrollbar-width: none;
+    }
+
+    .toolbar::-webkit-scrollbar { display: none; }
+
+    .filter-btn, .utility-btn {
+      border: 1px solid transparent;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.055);
+      color: var(--muted);
+      min-height: 38px;
+      padding: 0 13px;
+      white-space: nowrap;
+      font-size: 13px;
+      font-weight: 750;
+      cursor: pointer;
+    }
+
+    .filter-btn.active {
+      color: #fff;
+      background: var(--accent-soft);
+      border-color: rgba(255, 90, 31, 0.28);
+    }
+
+    .utility-btn {
+      margin-left: auto;
+      color: #c8c8ce;
+    }
+
+    .chapter-group {
+      margin-bottom: 14px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      background: var(--surface);
+      box-shadow: 0 8px 26px rgba(0, 0, 0, 0.14);
+    }
+
+    .group-title {
+      padding: 12px 15px 10px;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.075em;
+      text-transform: uppercase;
+      background: rgba(255, 255, 255, 0.018);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .item {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 14px;
+      align-items: center;
+      min-height: 72px;
+      padding: 12px 14px;
+      border-top: 1px solid rgba(255, 255, 255, 0.055);
+      transition: background 180ms ease, opacity 180ms ease;
+    }
+
+    .item:first-of-type { border-top: 0; }
+    .item.sub { padding-left: 28px; }
+    .item.is-final { background: linear-gradient(90deg, rgba(52, 199, 89, 0.075), transparent 42%); }
+    .item.hidden { display: none; }
+
+    .item-copy { min-width: 0; }
+
+    .item-code {
+      display: inline-block;
+      color: var(--accent);
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.035em;
+      margin-bottom: 3px;
+    }
+
+    .item-title {
+      font-size: 15px;
+      font-weight: 720;
+      line-height: 1.28;
+      letter-spacing: -0.012em;
+      overflow-wrap: anywhere;
+    }
+
+    .item.sub .item-title { font-weight: 620; }
+
+    .checks {
+      display: flex;
+      gap: 7px;
+      flex-shrink: 0;
+    }
+
+    .check-btn {
+      width: 42px;
+      height: 42px;
+      border-radius: 13px;
+      border: 1px solid rgba(255, 255, 255, 0.09);
+      background: rgba(255, 255, 255, 0.045);
+      color: #8f8f96;
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      transition: transform 130ms ease, background 130ms ease, border-color 130ms ease, color 130ms ease;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .check-btn:active { transform: scale(0.94); }
+
+    .check-btn svg {
+      width: 19px;
+      height: 19px;
+      pointer-events: none;
+    }
+
+    .check-btn.edited.active {
+      color: #fff;
+      background: var(--accent);
+      border-color: var(--accent);
+      box-shadow: 0 0 0 4px rgba(255, 90, 31, 0.10);
+    }
+
+    .check-btn.final.active {
+      color: #07140b;
+      background: var(--done);
+      border-color: var(--done);
+      box-shadow: 0 0 0 4px rgba(52, 199, 89, 0.09);
+    }
+
+    .empty {
+      display: none;
+      text-align: center;
+      color: var(--muted);
+      padding: 36px 16px;
+      border: 1px dashed rgba(255, 255, 255, 0.12);
+      border-radius: var(--radius);
+    }
+
+    .footer {
+      color: #77777f;
+      text-align: center;
+      font-size: 12px;
+      line-height: 1.5;
+      padding: 18px 8px 0;
+    }
+
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: calc(20px + env(safe-area-inset-bottom));
+      transform: translate(-50%, 12px);
+      z-index: 40;
+      padding: 11px 15px;
+      border-radius: 13px;
+      background: rgba(35, 35, 39, 0.96);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #fff;
+      font-size: 13px;
+      font-weight: 650;
+      box-shadow: var(--shadow);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 180ms ease, transform 180ms ease;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translate(-50%, 0);
+    }
+
+    @media (max-width: 520px) {
+      .app { padding-left: 12px; padding-right: 12px; }
+      .hero { grid-template-columns: 58px 1fr; gap: 13px; }
+      .hero img { width: 58px; height: 58px; border-radius: 15px; }
+      .dashboard { padding: 14px; }
+      .stats { gap: 7px; }
+      .stat { padding: 11px 9px; }
+      .stat-value { font-size: 19px; }
+      .stat-label { font-size: 9px; letter-spacing: 0.045em; }
+      .item { grid-template-columns: minmax(0, 1fr) auto; gap: 9px; padding: 11px 11px; }
+      .item.sub { padding-left: 20px; }
+      .check-btn { width: 39px; height: 39px; border-radius: 12px; }
+      .item-title { font-size: 14px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header class="hero">
+      <img src="icon-192.png" alt="BeLL App-Logo" />
+      <div>
+        <div class="eyebrow">Besondere Lernleistung</div>
+        <h1>BeLL Fortschritt</h1>
+        <p class="subtitle">Kapitel abhaken, Fortschritt behalten – direkt auf diesem Gerät.</p>
+      </div>
+    </header>
+
+    <section class="dashboard" aria-label="Fortschritt">
+      <div class="stats">
+        <div class="stat">
+          <span class="stat-value" id="totalCount">34</span>
+          <span class="stat-label">Abschnitte</span>
+        </div>
+        <div class="stat">
+          <span class="stat-value" id="editedCount">0</span>
+          <span class="stat-label">Bearbeitet</span>
+        </div>
+        <div class="stat">
+          <span class="stat-value" id="finalCount">0</span>
+          <span class="stat-label">Finalisiert</span>
+        </div>
+      </div>
+
+      <div class="progress-row">
+        <div class="progress-head"><span>Bearbeitet</span><span id="editedPercent">0 %</span></div>
+        <div class="progress-track"><div class="progress-fill edited" id="editedBar"></div></div>
+      </div>
+      <div class="progress-row">
+        <div class="progress-head"><span>Finalisiert</span><span id="finalPercent">0 %</span></div>
+        <div class="progress-track"><div class="progress-fill final" id="finalBar"></div></div>
+      </div>
+    </section>
+
+    <nav class="toolbar" aria-label="Filter">
+      <button class="filter-btn active" data-filter="all">Alle</button>
+      <button class="filter-btn" data-filter="open">Offen</button>
+      <button class="filter-btn" data-filter="edited">Bearbeitet</button>
+      <button class="filter-btn" data-filter="final">Finalisiert</button>
+      <button class="utility-btn" id="resetBtn" type="button">Zurücksetzen</button>
+    </nav>
+
+    <section id="chapterList" aria-live="polite"></section>
+    <div class="empty" id="emptyState">Für diesen Filter gibt es gerade keine Abschnitte.</div>
+
+    <footer class="footer">
+      Deine Häkchen werden lokal im Browser gespeichert. Beim erneuten Öffnen auf demselben Gerät bleiben sie erhalten.
+    </footer>
+  </main>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    const STORAGE_KEY = "bell-progress-v1";
+
+    const groups = [
+      {
+        title: "Vorspann",
+        items: [
+          { id: "kurzfassung", code: "", title: "Kurzfassung", sub: false },
+          { id: "danksagung", code: "", title: "Danksagung", sub: false },
+          { id: "abkuerzungen", code: "", title: "Abkürzungen, Formelzeichen und Einheiten", sub: false }
+        ]
+      },
+      {
+        title: "1 · Einleitung",
+        items: [
+          { id: "1", code: "1", title: "Einleitung", sub: false },
+          { id: "1-1", code: "1.1", title: "Zielstellung", sub: true }
+        ]
+      },
+      {
+        title: "2 · Theoretische Grundlagen",
+        items: [
+          { id: "2", code: "2", title: "Theoretische Grundlagen", sub: false },
+          { id: "2-1", code: "2.1", title: "Ammoniakspaltung und Produktgas", sub: true },
+          { id: "2-2", code: "2.2", title: "Reinheitsanforderungen und Aufreinigung", sub: true },
+          { id: "2-3", code: "2.3", title: "Adsorption an porösen Feststoffen", sub: true },
+          { id: "2-4", code: "2.4", title: "Isothermen, Beladungshub und Regeneration", sub: true },
+          { id: "2-5", code: "2.5", title: "Adsorptionswärme und Temperaturabhängigkeit", sub: true },
+          { id: "2-6", code: "2.6", title: "Materialklassen und strukturelle Unterschiede", sub: true }
+        ]
+      },
+      {
+        title: "3 · Experimenteller Teil",
+        items: [
+          { id: "3", code: "3", title: "Experimenteller Teil", sub: false },
+          { id: "3-1", code: "3.1", title: "Materialien und Messprogramm", sub: true },
+          { id: "3-2", code: "3.2", title: "Isothermenmessung", sub: true },
+          { id: "3-3", code: "3.3", title: "Charakterisierung bei 77 K", sub: true },
+          { id: "3-4", code: "3.4", title: "Berechnung der Vergleichswerte", sub: true },
+          { id: "3-5", code: "3.5", title: "Beladungsdifferenzen und Adsorptionswärme", sub: true },
+          { id: "3-6", code: "3.6", title: "Durchbruchsuntersuchungen", sub: true }
+        ]
+      },
+      {
+        title: "4 · Ergebnisse",
+        items: [
+          { id: "4", code: "4", title: "Ergebnisse", sub: false },
+          { id: "4-1", code: "4.1", title: "Oberfläche und Porenvolumen", sub: true },
+          { id: "4-2", code: "4.2", title: "Ammoniakaufnahme", sub: true },
+          { id: "4-3", code: "4.3", title: "Stickstoffaufnahme", sub: true },
+          { id: "4-4", code: "4.4", title: "Temperaturreihen und Modellbeschreibung", sub: true },
+          { id: "4-5", code: "4.5", title: "Beladungsdifferenzen und Adsorptionswärme", sub: true },
+          { id: "4-6", code: "4.6", title: "Ammoniakdurchbruch im Schüttbett", sub: true }
+        ]
+      },
+      {
+        title: "5 · Diskussion",
+        items: [
+          { id: "5", code: "5", title: "Diskussion", sub: false },
+          { id: "5-1", code: "5.1", title: "Materialauswahl für die Reinigungsaufgabe", sub: true },
+          { id: "5-2", code: "5.2", title: "Regeneration und Übertragbarkeit", sub: true },
+          { id: "5-3", code: "5.3", title: "Aussagegrenzen und nächste Versuche", sub: true }
+        ]
+      },
+      {
+        title: "Abschluss",
+        items: [
+          { id: "6", code: "6", title: "Fazit und Ausblick", sub: false },
+          { id: "literatur", code: "", title: "Literaturverzeichnis", sub: false }
+        ]
+      },
+      {
+        title: "Anhang",
+        items: [
+          { id: "A", code: "A", title: "Ergänzende Datentabellen", sub: false },
+          { id: "B", code: "B", title: "Diagrammtafeln", sub: false }
+        ]
+      }
+    ];
+
+    const flatItems = groups.flatMap(group => group.items);
+    const defaultState = Object.fromEntries(flatItems.map(item => [item.id, { edited: false, final: false }]));
+
+    let state = loadState();
+    let currentFilter = "all";
+
+    const chapterList = document.getElementById("chapterList");
+    const emptyState = document.getElementById("emptyState");
+    const toast = document.getElementById("toast");
+
+    function loadState() {
+      try {
+        const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY));
+        if (!parsed || typeof parsed !== "object") return structuredClone(defaultState);
+        const merged = structuredClone(defaultState);
+        for (const id of Object.keys(merged)) {
+          if (parsed[id]) {
+            merged[id].edited = Boolean(parsed[id].edited);
+            merged[id].final = Boolean(parsed[id].final);
+          }
+        }
+        return merged;
+      } catch {
+        return structuredClone(defaultState);
+      }
+    }
+
+    function saveState() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }
+
+    function icon(type) {
+      if (type === "edited") {
+        return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L8 18l-4 1 1-4Z"/></svg>';
+      }
+      return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 4 4L19 6"/></svg>';
+    }
+
+    function render() {
+      chapterList.innerHTML = "";
+      let visibleItems = 0;
+
+      for (const group of groups) {
+        const wrapper = document.createElement("article");
+        wrapper.className = "chapter-group";
+
+        const heading = document.createElement("div");
+        heading.className = "group-title";
+        heading.textContent = group.title;
+        wrapper.appendChild(heading);
+
+        let visibleInGroup = 0;
+
+        for (const item of group.items) {
+          const itemState = state[item.id];
+          const visible = matchesFilter(itemState);
+          if (visible) visibleInGroup++;
+
+          const row = document.createElement("div");
+          row.className = `item${item.sub ? " sub" : ""}${itemState.final ? " is-final" : ""}${visible ? "" : " hidden"}`;
+          row.dataset.id = item.id;
+
+          const copy = document.createElement("div");
+          copy.className = "item-copy";
+          copy.innerHTML = `${item.code ? `<span class="item-code">${item.code}</span>` : ""}<div class="item-title">${item.title}</div>`;
+
+          const checks = document.createElement("div");
+          checks.className = "checks";
+
+          const editedBtn = document.createElement("button");
+          editedBtn.className = `check-btn edited${itemState.edited ? " active" : ""}`;
+          editedBtn.type = "button";
+          editedBtn.setAttribute("aria-label", `${item.title}: bearbeitet`);
+          editedBtn.setAttribute("aria-pressed", String(itemState.edited));
+          editedBtn.title = "Bearbeitet";
+          editedBtn.innerHTML = icon("edited");
+          editedBtn.addEventListener("click", () => toggle(item.id, "edited"));
+
+          const finalBtn = document.createElement("button");
+          finalBtn.className = `check-btn final${itemState.final ? " active" : ""}`;
+          finalBtn.type = "button";
+          finalBtn.setAttribute("aria-label", `${item.title}: finalisiert`);
+          finalBtn.setAttribute("aria-pressed", String(itemState.final));
+          finalBtn.title = "Finalisiert";
+          finalBtn.innerHTML = icon("final");
+          finalBtn.addEventListener("click", () => toggle(item.id, "final"));
+
+          checks.append(editedBtn, finalBtn);
+          row.append(copy, checks);
+          wrapper.appendChild(row);
+        }
+
+        if (visibleInGroup > 0) {
+          chapterList.appendChild(wrapper);
+          visibleItems += visibleInGroup;
+        }
+      }
+
+      emptyState.style.display = visibleItems === 0 ? "block" : "none";
+      updateStats();
+    }
+
+    function matchesFilter(itemState) {
+      switch (currentFilter) {
+        case "open": return !itemState.final;
+        case "edited": return itemState.edited && !itemState.final;
+        case "final": return itemState.final;
+        default: return true;
+      }
+    }
+
+    function toggle(id, field) {
+      state[id][field] = !state[id][field];
+      saveState();
+      render();
+    }
+
+    function updateStats() {
+      const total = flatItems.length;
+      const edited = flatItems.filter(item => state[item.id].edited).length;
+      const final = flatItems.filter(item => state[item.id].final).length;
+      const editedPct = Math.round((edited / total) * 100);
+      const finalPct = Math.round((final / total) * 100);
+
+      document.getElementById("totalCount").textContent = total;
+      document.getElementById("editedCount").textContent = edited;
+      document.getElementById("finalCount").textContent = final;
+      document.getElementById("editedPercent").textContent = `${editedPct} %`;
+      document.getElementById("finalPercent").textContent = `${finalPct} %`;
+      document.getElementById("editedBar").style.width = `${editedPct}%`;
+      document.getElementById("finalBar").style.width = `${finalPct}%`;
+    }
+
+    document.querySelectorAll(".filter-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        currentFilter = btn.dataset.filter;
+        document.querySelectorAll(".filter-btn").forEach(b => b.classList.toggle("active", b === btn));
+        render();
+      });
+    });
+
+    document.getElementById("resetBtn").addEventListener("click", () => {
+      const okay = confirm("Wirklich alle Häkchen zurücksetzen?");
+      if (!okay) return;
+      state = structuredClone(defaultState);
+      saveState();
+      render();
+      showToast("Fortschritt zurückgesetzt");
+    });
+
+    function showToast(message) {
+      toast.textContent = message;
+      toast.classList.add("show");
+      clearTimeout(showToast.timer);
+      showToast.timer = setTimeout(() => toast.classList.remove("show"), 1600);
+    }
+
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("./sw.js").catch(() => {});
+      });
+    }
+
+    render();
+  </script>
+</body>
+</html>
